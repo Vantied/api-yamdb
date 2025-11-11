@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',  # Добавил фильтр
     'api.apps.ApiConfig',  # Добавил приложение api
     'reviews.apps.ReviewsConfig'  # Добавил приложение reviews
 ]

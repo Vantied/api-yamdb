@@ -17,6 +17,10 @@ class Category(models.Model):
         unique=True
     )
 
+    class Meta:
+        verbose_name = 'категория'
+        verbose_name_plural = 'Категории'
+
     def __str__(self):
         return self.name[:LAST_TWENTY_CHARS]
 
@@ -32,6 +36,10 @@ class Genre(models.Model):
         max_length=MAX_LENGTH_SLUG,
         unique=True
     )
+
+    class Meta:
+        verbose_name = 'жанр'
+        verbose_name_plural = 'Жанры'
 
     def __str__(self):
         return self.name[:LAST_TWENTY_CHARS]
@@ -65,6 +73,10 @@ class Title(models.Model):
     description = models.TextField(
         verbose_name='Описание'
     )
+
+    class Meta:
+        verbose_name = 'произведение'
+        verbose_name_plural = 'Произведения'
 
     def __str__(self):
         return self.name[:LAST_TWENTY_CHARS]
