@@ -1,17 +1,19 @@
 from django.db import models
 
-from reviews.constants import LAST_TWENTY_CHARS
+from reviews.constants import (
+    LAST_TWENTY_CHARS, MAX_LENGTH_NAME, MAX_LENGTH_SLUG
+)
 
 
 class Category(models.Model):
     '''Модель для категории'''
 
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name='Название категории'
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         unique=True
     )
 
@@ -23,11 +25,11 @@ class Genre(models.Model):
     '''Модель для жанра'''
 
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name='Название жанра'
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         unique=True
     )
 
@@ -50,7 +52,7 @@ class Title(models.Model):
         related_name='titles'
     )
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name='Название'
     )
     year = models.IntegerField(
