@@ -13,6 +13,9 @@ class Category(models.Model):
         unique=True
     )
 
+    def __str__(self):
+        return self.name
+
 
 class Genre(models.Model):
     '''Модель для жанра'''
@@ -26,6 +29,9 @@ class Genre(models.Model):
         unique=True
     )
 
+    def __str__(self):
+        return self.name
+
 
 class Title(models.Model):
     '''Модель для произведений'''
@@ -33,11 +39,13 @@ class Title(models.Model):
     category = models.ForeignKey(
         Category,
         on_delete=models.CASCADE,
-        verbose_name='Категория'
+        verbose_name='Категория',
+        related_name='titles'
     )
     genre = models.ManyToManyField(
         Genre,
-        verbose_name='Жанр'
+        verbose_name='Жанр',
+        related_name='titles'
     )
     name = models.CharField(
         max_length=256,
@@ -53,3 +61,6 @@ class Title(models.Model):
     description = models.TextField(
         verbose_name='Описание'
     )
+
+    def __str__(self):
+        return self.name
