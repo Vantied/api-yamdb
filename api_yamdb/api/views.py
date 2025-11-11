@@ -1,8 +1,8 @@
-from rest_framework import viewsets, filters
+from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as django_filters
 
-from api.serializers import TitleSerializer, TitleCreateSerializer
+from api.serializers import TitleCreateSerializer, TitleSerializer
 from reviews.models import Title
 
 
