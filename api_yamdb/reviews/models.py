@@ -1,5 +1,7 @@
 from django.db import models
 
+from reviews.constants import LAST_TWENTY_CHARS
+
 
 class Category(models.Model):
     '''Модель для категории'''
@@ -14,7 +16,7 @@ class Category(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return self.name[:LAST_TWENTY_CHARS]
 
 
 class Genre(models.Model):
@@ -30,7 +32,7 @@ class Genre(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return self.name[:LAST_TWENTY_CHARS]
 
 
 class Title(models.Model):
@@ -63,4 +65,4 @@ class Title(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return self.name[:LAST_TWENTY_CHARS]

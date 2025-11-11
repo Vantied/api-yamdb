@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Genre, Title
+from reviews.models import Category, Genre, Title
 
 # Регистрация в админке
 admin.site.register(Category)
