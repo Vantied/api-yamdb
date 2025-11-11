@@ -54,3 +54,41 @@ class Review(models.Model):
 
     def __str__(self):
         return f'Отзыв {self.author} на {self.title}'
+
+
+class Comment(models.Model):
+    """
+    Модель для хранения комментариев пользователей к отзывам.
+
+    Атрибуты:
+        review (ForeignKey): Ссылка на отзыв, к которому оставлен комментарий
+        text (TextField): Текст комментария
+        author (ForeignKey): Пользователь, оставивший комментарий
+        pub_date (DateTimeField): Дата и время публикации комментария
+    """
+
+    review = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Отзыв'
+    )
+    text = models.TextField(verbose_name='Текст комментария')
+    author = models.ForeignKey(
+        'users.User',
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name='Автор'
+    )
+    pub_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата публикации'
+    )
+
+    class Meta:
+
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return f'Комментарий {self.author} к отзыву {self.review.id}'
