@@ -5,18 +5,21 @@ from django.core.mail import send_mail
 from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import api_view
+from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from api.serializers import (
+    CategorySerializer
     SignUpSerializer,
     TitleCreateSerializer,
     TitleSerializer,
     TokenSerializer
 )
-from reviews.models import Title
+from reviews.models import Category, Title
+
 
 
 User = get_user_model()
@@ -139,3 +142,21 @@ class TitleViewSet(viewsets.ModelViewSet):
         if self.action in ('create', 'update', 'partial_update'):
             return TitleCreateSerializer
         return TitleSerializer
+
+
+class CategoryViewSet(mixins.ListModelMixin,
+                      mixins.CreateModelMixin,
+                      mixins.DestroyModelMixin,
+                      viewsets.GenericViewSet):
+    """
+    Вьюсет для работы с категориями.
+    Предоставляет операции:
+    - list: получение списка категорий (доступно без токена)
+    - create: создание категории (только для администраторов)
+    - destroy: удаление категории (только для администраторов)
+    """
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    filter_backends = (SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
