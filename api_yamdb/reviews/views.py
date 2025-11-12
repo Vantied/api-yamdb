@@ -1,9 +1,11 @@
 from django.shortcuts import render
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from reviews.models import Review, Comment
+
+from reviews.models import Comment, Review
 from reviews.permissions import IsAuthorOrReadOnly
+from reviews.serializers import CommentSerializer, ReviewSerializer
 
 
 class ReviewViewSet:
@@ -21,14 +23,15 @@ class ReviewViewSet:
         - Аутентифицированные пользователи могут создавать отзывы
         - Только автор может изменять или удалять свой отзыв
         - Все пользователи могут просматривать отзывы
-
-
-    Наследование от viewsets.ModelViewSet будет добавлено
-    после установки DRF
     """
 
-    # Временная заглушка - будет заменена на viewsets.ModelViewSet
-    pass
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthorOrReadOnly]
+
+    def perform_create(self, serializer):
+
+        serializer.save(author=self.request.user)
 
 
 class CommentViewSet:
@@ -46,11 +49,12 @@ class CommentViewSet:
         - Аутентифицированные пользователи могут создавать комментарии
         - Только автор может изменять или удалять свой комментарий
         - Все пользователи могут просматривать комментарии
-
-
-    Наследование от viewsets.ModelViewSet будет добавлено
-    после установки DRF
     """
 
-    # Временная заглушка - будет заменена на viewsets.ModelViewSet
-    pass
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthorOrReadOnly]
+
+    def perform_create(self, serializer):
+
+        serializer.save(author=self.request.user)

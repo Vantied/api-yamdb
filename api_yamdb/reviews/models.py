@@ -1,5 +1,7 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+
+from reviews.constants import LAST_TWENTY_CHARS
 
 
 class Review(models.Model):
@@ -53,7 +55,9 @@ class Review(models.Model):
         )
 
     def __str__(self):
-        return f'Отзыв {self.author} на {self.title}'
+        author_display = str(self.author)[:LAST_TWENTY_CHARS]
+        title_display = str(self.title)[:LAST_TWENTY_CHARS]
+        return f'Отзыв {author_display} на {title_display}'
 
 
 class Comment(models.Model):
@@ -91,4 +95,5 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return f'Комментарий {self.author} к отзыву {self.review.id}'
+        author_display = str(self.author)[:LAST_TWENTY_CHARS]
+        return f'Комментарий {author_display} к отзыву {self.review.id}'
