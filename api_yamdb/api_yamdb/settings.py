@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',  # Добавил приложение для работы DRF
     'django_filters',  # Добавил фильтр
     'api.apps.ApiConfig',  # Добавил приложение api
     'reviews.apps.ReviewsConfig'  # Добавил приложение reviews
