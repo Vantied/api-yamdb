@@ -85,6 +85,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'reviews.User'  # Сменил встроенную модель User на кастомную
 
 # Internationalization
 
