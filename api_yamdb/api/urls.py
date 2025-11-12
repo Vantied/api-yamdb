@@ -12,6 +12,6 @@ router_v1.register(r'titles', TitleViewSet, basename='titles')
 
 urlpatterns = [
     path(f'{VERSION}/', include(router_v1.urls)),
-    path('auth/signup/', signup, name='signup'),
-    path('auth/token/', get_token, name='token'),
+    path(f'{VERSION}/auth/signup/', signup, name='signup'),
+    path(f'{VERSION}/auth/token/', get_token, name='token'),
 ]

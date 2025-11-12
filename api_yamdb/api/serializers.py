@@ -22,6 +22,15 @@ class SignUpSerializer(serializers.Serializer):
         validators=(UniqueValidator(queryset=User.objects.all()),)
     )
 
+    def validate_username(self, value):
+        """Проверяет, что username не является зарезервированным именем."""
+
+        if value.lower() == 'me':
+            raise serializers.ValidationError(
+                "Использование имени 'me' в качестве username запрещено."
+            )
+        return value
+
 
 class TokenSerializer(serializers.Serializer):
     username = serializers.CharField(
