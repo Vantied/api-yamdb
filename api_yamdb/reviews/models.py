@@ -1,8 +1,13 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from api_yamdb.reviews.constants import (
-    CONFIRMATION_CODE_MAX_LENGTH, LAST_TWENTY_CHARS, ROLE_MAX_LENGTH
+from reviews.constants import (
+    CONFIRMATION_CODE_MAX_LENGTH,
+    LAST_TWENTY_CHARS,
+    NAME_MAX_LENGTH,
+    ROLE_MAX_LENGTH,
+    SLUG_MAX_LENGTH
+
 )
 
 
@@ -56,20 +61,17 @@ class User(AbstractUser):
     @property
     def is_moderator(self):
         return self.role == self.MODERATOR or self.is_admin
-from reviews.constants import (
-    LAST_TWENTY_CHARS, MAX_LENGTH_NAME, MAX_LENGTH_SLUG
-)
 
 
 class Category(models.Model):
     '''Модель для категории'''
 
     name = models.CharField(
-        max_length=MAX_LENGTH_NAME,
+        max_length=NAME_MAX_LENGTH,
         verbose_name='Название категории'
     )
     slug = models.SlugField(
-        max_length=MAX_LENGTH_SLUG,
+        max_length=SLUG_MAX_LENGTH,
         unique=True
     )
 
@@ -85,11 +87,11 @@ class Genre(models.Model):
     '''Модель для жанра'''
 
     name = models.CharField(
-        max_length=MAX_LENGTH_NAME,
+        max_length=NAME_MAX_LENGTH,
         verbose_name='Название жанра'
     )
     slug = models.SlugField(
-        max_length=MAX_LENGTH_SLUG,
+        max_length=SLUG_MAX_LENGTH,
         unique=True
     )
 
@@ -116,7 +118,7 @@ class Title(models.Model):
         related_name='titles'
     )
     name = models.CharField(
-        max_length=MAX_LENGTH_NAME,
+        max_length=NAME_MAX_LENGTH,
         verbose_name='Название'
     )
     year = models.IntegerField(
