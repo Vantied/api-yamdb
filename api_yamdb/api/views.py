@@ -1,9 +1,42 @@
-from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as django_filters
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from api.serializers import TitleCreateSerializer, TitleSerializer
+from api.permissions import IsAdmin
+from api.serializers import (
+    TitleCreateSerializer, TitleSerializer, UserMeSerializer, UserSerializer
+)
 from reviews.models import Title
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdmin]
+    lookup_field = 'username'
+
+    @action(
+        detail=False,
+        methods=['get', 'patch'],
+        permission_classes=[IsAuthenticated]
+    )
+    def me(self, request):
+        if request.method == 'GET':
+            serializer = UserMeSerializer(request.user)
+            return Response(serializer.data)
+
+        if request.method == 'PATCH':
+            serializer = UserMeSerializer(
+                request.user,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
 
 
 class TitleFilter(django_filters.FilterSet):
@@ -33,7 +66,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     list: получение списка произведений с фильтрацией
     retrieve: получение конкретного произведения
     create: добавление нового произведения (только для администраторов)
-    update/partial_update: изменение произведения (только для администраторов) 
+    update/partial_update: изменение произведения (только для администраторов)
     destroy: удаление произведения (только для администраторов)
     Фильтрация осуществляется через параметры:
     ?category=films - по категории
