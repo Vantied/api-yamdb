@@ -1,7 +1,34 @@
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
+from api.constants import EMAIL_MAX_LENGTH, USERNAME_MAX_LENGTH
 from reviews.models import Category, Genre, Title
+
+
+User = get_user_model()
+
+
+class SignUpSerializer(serializers.Serializer):
+    email = serializers.EmailField(
+        required=True,
+        max_length=EMAIL_MAX_LENGTH,
+        validators=(UniqueValidator(queryset=User.objects.all()),)
+    )
+    username = serializers.CharField(
+        required=True,
+        max_length=USERNAME_MAX_LENGTH,
+        validators=(UniqueValidator(queryset=User.objects.all()),)
+    )
+
+
+class TokenSerializer(serializers.Serializer):
+    username = serializers.CharField(
+        required=True,
+        max_length=USERNAME_MAX_LENGTH
+    )
+    confirmation_code = serializers.CharField(required=True)
 
 
 class CategorySerializer(serializers.ModelSerializer):
