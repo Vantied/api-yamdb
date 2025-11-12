@@ -1,10 +1,9 @@
 from django.shortcuts import render
-# Импорты для DRF будут раскомментированы после установки пакета
-# from rest_framework import viewsets, status
-# from rest_framework.decorators import action
-# from rest_framework.response import Response
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from reviews.models import Review, Comment
-# from reviews.permissions import IsAuthorOrReadOnly
+from reviews.permissions import IsAuthorOrReadOnly
 
 
 class ReviewViewSet:

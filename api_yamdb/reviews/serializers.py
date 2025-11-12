@@ -1,5 +1,4 @@
-# Импорты для DRF будут раскомментированы после установки пакета
-# from rest_framework import serializers
+from rest_framework import serializers
 from reviews.models import Review, Comment
 
 
@@ -16,14 +15,19 @@ class CommentSerializer:
         text: Текст комментария
         author: Имя автора (только для чтения)
         pub_date: Дата публикации (только для чтения)
-
-
-    Наследование от serializers.ModelSerializer будет добавлено
-    после установки DRF
     """
 
-    # Временная заглушка - будет заменена на serializers.ModelSerializer
-    pass
+    author = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ('id',
+                  'text',
+                  'author',
+                  'pub_date')
+        read_only_fields = ('id',
+                            'author',
+                            'pub_date')
 
 
 class ReviewSerializer:
@@ -42,11 +46,31 @@ class ReviewSerializer:
         score: Оценка произведения
         pub_date: Дата публикации (только для чтения)
         comments: Список комментариев к отзыву (только для чтения)
-
-
-    Наследование от serializers.ModelSerializer будет добавлено
-    после установки DRF
     """
 
-    # Временная заглушка - будет заменена на serializers.ModelSerializer
-    pass
+    author = serializers.StringRelatedField(read_only=True)
+    comments = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Review
+        fields = ('id',
+                  'title',
+                  'text',
+                  'author',
+                  'score',
+                  'pub_date',
+                  'comments')
+        read_only_fields = ('id',
+                            'author',
+                            'pub_date',
+                            'comments')
+
+    def validate_score(self, value):
+        """
+        Кастомная валидация для поля score.
+        """
+        if value < 1 or value > 10:
+            raise serializers.ValidationError(
+                'Оценка должна быть в диапазоне от 1 до 10'
+            )
+        return value
