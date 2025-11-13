@@ -17,14 +17,14 @@ class Review(models.Model):
     """
 
     title = models.ForeignKey(
-        'titles.Title',  # Ссылка на модель произведений (позже)
+        'Title',
         on_delete=models.CASCADE,
         related_name='reviews',
         verbose_name='Произведение'
     )
     text = models.TextField(verbose_name='Текст отзыва')
     author = models.ForeignKey(
-        'users.User',  # Ссылка на модель пользователей (позже)
+        'User',
         on_delete=models.CASCADE,
         related_name='reviews',
         verbose_name='Автор'
