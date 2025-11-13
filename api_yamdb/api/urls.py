@@ -1,14 +1,16 @@
 from django.urls import include, path
 from rest_framework import routers
 
-from api.views import CategoryViewSet, get_token, signup, TitleViewSet
 from api.constants import VERSION
+from api.views import CategoryViewSet, get_token, signup, TitleViewSet, UserViewSet
+
 
 app_name = 'api'
 
 # Создаём роутер и регистрируем ViewSet
 router_v1 = routers.DefaultRouter()
 router_v1.register(r'titles', TitleViewSet, basename='titles')
+router_v1.register(r'users', UserViewSet, basename='users')
 router_v1.register(r'categories', CategoryViewSet, basename='categories')
 
 urlpatterns = [
