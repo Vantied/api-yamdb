@@ -8,7 +8,7 @@ from reviews.permissions import IsAuthorOrReadOnly
 from reviews.serializers import CommentSerializer, ReviewSerializer
 
 
-class ReviewViewSet:
+class ReviewViewSet(viewsets.ModelViewSet):
     """
     ViewSet для обработки операций CRUD с отзывами.
 
@@ -27,14 +27,14 @@ class ReviewViewSet:
 
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = (IsAuthorOrReadOnly,)
 
     def perform_create(self, serializer):
 
         serializer.save(author=self.request.user)
 
 
-class CommentViewSet:
+class CommentViewSet(viewsets.ModelViewSet):
     """
     ViewSet для обработки операций CRUD с комментариями.
 
@@ -53,7 +53,7 @@ class CommentViewSet:
 
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthorOrReadOnly]
+    permission_classes = (IsAuthorOrReadOnly,)
 
     def perform_create(self, serializer):
 
