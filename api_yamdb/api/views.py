@@ -9,7 +9,7 @@ from api.permissions import IsAdmin
 from api.serializers import (
     TitleCreateSerializer, TitleSerializer, UserMeSerializer, UserSerializer
 )
-from reviews.models import Title
+from reviews.models import Title, User
 
 
 class UserViewSet(viewsets.ModelViewSet):
