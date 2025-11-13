@@ -12,13 +12,14 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from api.serializers import (
-    CategorySerializer
+    CategorySerializer,
+    GenreSerializer,
     SignUpSerializer,
     TitleCreateSerializer,
     TitleSerializer,
     TokenSerializer
 )
-from reviews.models import Category, Title
+from reviews.models import Category, Genre, Title
 
 
 
@@ -157,6 +158,25 @@ class CategoryViewSet(mixins.ListModelMixin,
     """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    filter_backends = (SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+
+class GenreViewSet(mixins.ListModelMixin,
+                   mixins.CreateModelMixin,
+                   mixins.DestroyModelMixin,
+                   viewsets.GenericViewSet):
+    """
+    Вьюсет для жанров.
+
+    Доступ:
+    - GET /api/v1/genres/ — список всех жанров (доступно без токена)
+    - POST /api/v1/genres/ — создать жанр (только администратор)
+    - DELETE /api/v1/genres/{slug}/ — удалить жанр (только администратор)
+    """
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
