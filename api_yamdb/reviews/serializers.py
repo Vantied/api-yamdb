@@ -3,7 +3,7 @@ from rest_framework import serializers
 from reviews.models import Comment, Review
 
 
-class CommentSerializer:
+class CommentSerializer(serializers.ModelSerializer):
     """
     Сериализатор для модели Comment.
 
@@ -31,7 +31,7 @@ class CommentSerializer:
                             'pub_date')
 
 
-class ReviewSerializer:
+class ReviewSerializer(serializers.ModelSerializer):
     """
     Сериализатор для модели Review.
 
@@ -66,6 +66,11 @@ class ReviewSerializer:
                             'pub_date',
                             'comments')
 
+    def get_comments(self, obj):
+        """Получает все комментарии для отзыва."""
+        comments = obj.comments.all()
+        return CommentSerializer(comments, many=True).data
+
     def validate_score(self, value):
         """
         Кастомная валидация для поля score.
@@ -75,3 +80,4 @@ class ReviewSerializer:
                 'Оценка должна быть в диапазоне от 1 до 10'
             )
         return value
+        
