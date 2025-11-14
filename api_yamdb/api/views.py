@@ -6,11 +6,13 @@ from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import api_view
+from rest_framework.decorators import action, api_view
 from rest_framework.filters import SearchFilter
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
+from api.permissions import IsAdmin
 from api.serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -21,6 +23,7 @@ from api.serializers import (
 )
 from reviews.models import Category, Genre, Title
 
+from reviews.models import Category, Title, User
 
 
 User = get_user_model()
@@ -117,8 +120,35 @@ class TitleFilter(django_filters.FilterSet):
 
     class Meta:
         model = Title
-        fields = ('category', 'genre', 'name', 'year')
+        fields = ('category', 'genre', 'name', 'year')  
+  
 
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdmin]
+    lookup_field = 'username'
+
+    @action(
+        detail=False,
+        methods=['get', 'patch'],
+        permission_classes=[IsAuthenticated]
+    )
+    def me(self, request):
+        if request.method == 'GET':
+            serializer = UserMeSerializer(request.user)
+            return Response(serializer.data)
+
+        if request.method == 'PATCH':
+            serializer = UserMeSerializer(
+                request.user,
+                data=request.data,
+                partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+ 
 
 class TitleViewSet(viewsets.ModelViewSet):
     """
