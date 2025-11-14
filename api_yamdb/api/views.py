@@ -14,6 +14,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from api.permissions import IsAdmin
 from api.serializers import (
+    UserSerializer,
     CategorySerializer,
     GenreSerializer,
     SignUpSerializer,

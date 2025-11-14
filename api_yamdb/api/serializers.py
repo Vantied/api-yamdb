@@ -6,6 +6,8 @@ from rest_framework.validators import UniqueValidator
 from api.constants import EMAIL_MAX_LENGTH, USERNAME_MAX_LENGTH
 from reviews.models import Category, Genre, Title, User
 
+User = get_user_model()
+
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -28,9 +30,6 @@ class UserMeSerializer(serializers.ModelSerializer):
             'last_name', 'bio', 'role'
         )
         read_only_fields = ('role',)
-
-
-User = get_user_model()
 
 
 class SignUpSerializer(serializers.Serializer):
