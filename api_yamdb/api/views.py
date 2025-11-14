@@ -12,9 +12,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from api.permissions import IsAdmin
+from api.permissions import IsAdmin, IsAdminOrReadOnly
 from api.serializers import (
     UserSerializer,
+    UserMeSerializer,
     CategorySerializer,
     GenreSerializer,
     SignUpSerializer,
@@ -23,8 +24,6 @@ from api.serializers import (
     TokenSerializer
 )
 from reviews.models import Category, Genre, Title
-
-from reviews.models import Category, Title, User
 
 
 User = get_user_model()
@@ -121,19 +120,19 @@ class TitleFilter(django_filters.FilterSet):
 
     class Meta:
         model = Title
-        fields = ('category', 'genre', 'name', 'year')  
-  
+        fields = ('category', 'genre', 'name', 'year')
+
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = (IsAdmin,)
     lookup_field = 'username'
 
     @action(
         detail=False,
         methods=['get', 'patch'],
-        permission_classes=[IsAuthenticated]
+        permission_classes=(IsAuthenticated,)
     )
     def me(self, request):
         if request.method == 'GET':
@@ -149,7 +148,7 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
- 
+
 
 class TitleViewSet(viewsets.ModelViewSet):
     """
@@ -168,6 +167,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     """
     queryset = Title.objects.all()
     filter_backends = (DjangoFilterBackend,)
+    permission_classes = (IsAdminOrReadOnly,)
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
@@ -190,6 +190,7 @@ class CategoryViewSet(mixins.ListModelMixin,
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     filter_backends = (SearchFilter,)
+    permission_classes = (IsAdminOrReadOnly,)
     search_fields = ('name',)
     lookup_field = 'slug'
 
@@ -208,6 +209,7 @@ class GenreViewSet(mixins.ListModelMixin,
     """
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'

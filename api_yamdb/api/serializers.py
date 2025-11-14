@@ -4,7 +4,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from api.constants import EMAIL_MAX_LENGTH, USERNAME_MAX_LENGTH
-from reviews.models import Category, Genre, Title, User
+from reviews.models import Category, Genre, Title
 
 User = get_user_model()
 
@@ -90,17 +90,17 @@ class TitleSerializer(serializers.ModelSerializer):
         model = Title
         fields = ('id', 'name', 'year', 'rating', 'description',
                   'genre', 'category')
+        read_only_fields = ('id',)
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
-    """Сериализатор для создании названия произведения"""
+    """Сериализатор для создания произведений"""
 
     genre = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(),
         many=True
     )
-
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
@@ -108,10 +108,18 @@ class TitleCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('name', 'year', 'description', 'genre', 'category')
+        fields = (
+            'id',
+            'name',
+            'year',
+            'description',
+            'genre',
+            'category',
+            'rating',
+        )
+        read_only_fields = ('id', 'rating')
 
     def validate_year(self, value):
-        """Валидация года"""
         if value > timezone.now().year:
             raise serializers.ValidationError(
                 'Год не может быть больше текущего'
