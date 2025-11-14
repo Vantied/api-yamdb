@@ -1,7 +1,15 @@
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from reviews.constants import LAST_TWENTY_CHARS
+from reviews.constants import (
+    CONFIRMATION_CODE_MAX_LENGTH,
+    LAST_TWENTY_CHARS,
+    NAME_MAX_LENGTH,
+    ROLE_MAX_LENGTH,
+    SLUG_MAX_LENGTH
+
+)
 
 
 class Review(models.Model):
@@ -97,17 +105,6 @@ class Comment(models.Model):
     def __str__(self):
         author_display = str(self.author)[:LAST_TWENTY_CHARS]
         return f'Комментарий {author_display} к отзыву {self.review.id}'
-from django.contrib.auth.models import AbstractUser
-from django.db import models
-
-from reviews.constants import (
-    CONFIRMATION_CODE_MAX_LENGTH,
-    LAST_TWENTY_CHARS,
-    NAME_MAX_LENGTH,
-    ROLE_MAX_LENGTH,
-    SLUG_MAX_LENGTH
-
-)
 
 
 class User(AbstractUser):
