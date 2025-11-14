@@ -22,3 +22,9 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ('id', 'review', 'author', 'pub_date')
     list_filter = ('pub_date',)
     search_fields = ('text', 'author__username', 'review__text')
+from reviews.models import Category, Genre, Title
+
+# Регистрация в админке
+admin.site.register(Category)
+admin.site.register(Genre)
+admin.site.register(Title)
