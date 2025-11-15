@@ -17,6 +17,7 @@ router_v1.register(r'genres', GenreViewSet, basename='genres')
 
 urlpatterns = [
     path(f'{VERSION}/', include(router_v1.urls)),
+    path(f'{VERSION}/', include('reviews.urls')),
     path(f'{VERSION}/auth/signup/', signup, name='signup'),
     path(f'{VERSION}/auth/token/', get_token, name='token'),
 ]
