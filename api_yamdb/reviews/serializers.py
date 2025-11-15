@@ -71,9 +71,42 @@ class ReviewSerializer(serializers.ModelSerializer):
         comments = obj.comments.all()
         return CommentSerializer(comments, many=True).data
 
+    def validate(self, data):
+        """
+        Проверяет что пользователь не оставлял отзыв на это произведение.
+
+        Args:
+            data: Валидируемые данные
+
+        Returns:
+            dict: Проверенные данные
+
+        Raises:
+            ValidationError: Если пользователь уже оставлял отзыв
+        """
+        if self.context['request'].method == 'POST':
+            title = data.get('title')
+            author = self.context['request'].user
+
+            if Review.objects.filter(title=title, author=author).exists():
+                raise serializers.ValidationError(
+                    'Вы уже оставляли отзыв на это произведение'
+                )
+
+        return data
+
     def validate_score(self, value):
         """
         Кастомная валидация для поля score.
+
+        Args:
+            value: Значение оценки
+
+        Returns:
+            int: Проверенное значение оценки
+
+        Raises:
+            ValidationError: Если оценка не в диапазоне 1-10
         """
         if value < 1 or value > 10:
             raise serializers.ValidationError(
