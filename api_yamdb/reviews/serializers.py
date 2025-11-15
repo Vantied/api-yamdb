@@ -80,4 +80,3 @@ class ReviewSerializer(serializers.ModelSerializer):
                 'Оценка должна быть в диапазоне от 1 до 10'
             )
         return value
-        
