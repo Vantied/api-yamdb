@@ -40,11 +40,19 @@ def signup(request):
     username = serializer.validated_data['username']
     email = serializer.validated_data['email']
 
-    user, created = User.objects.get_or_create(username=username, email=email)
-    
-    # Обновляем confirmation_code каждый раз
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={'email': email}
+    )
+
+    # Обновляем email, если он изменился
+    if not created and user.email != email:
+        user.email = email
+        user.save(update_fields=['email'])
+
+    # Обновляем confirmation_code
     user.confirmation_code = secrets.token_urlsafe(16)
-    user.save()
+    user.save(update_fields=['confirmation_code'])
 
     # Отправка письма с кодом подтверждения
     send_mail(
@@ -114,6 +122,8 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = (IsAdmin,)
     lookup_field = 'username'
+    filter_backends = (SearchFilter,)  # <-- Добавлено
+    search_fields = ('username',)      # <-- Добавлено
 
     @action(
         detail=False,

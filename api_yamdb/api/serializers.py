@@ -13,6 +13,7 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
+        max_length=EMAIL_MAX_LENGTH,
         validators=(UniqueValidator(queryset=User.objects.all()),)
     )
 
@@ -34,17 +35,19 @@ class UserMeSerializer(serializers.ModelSerializer):
         read_only_fields = ('role',)
 
 
+# api/serializers.py
+
 class SignUpSerializer(serializers.Serializer):
     email = serializers.EmailField(
         required=True,
         max_length=254,
-        validators=[UniqueValidator(queryset=User.objects.all())]
+        # Убираем UniqueValidator, будем проверять в create
     )
     username = serializers.CharField(
         required=True,
         max_length=150,
+        # Убираем UniqueValidator, будем проверять в create
         validators=[
-            UniqueValidator(queryset=User.objects.all()),
             RegexValidator(
                 regex=r'^[\w.@+-]+\Z',
                 message='Недопустимые символы в username'
@@ -59,6 +62,25 @@ class SignUpSerializer(serializers.Serializer):
                 "Использование имени 'me' в качестве username запрещено."
             )
         return value
+
+    def validate(self, data):
+        """Проверяет уникальность username и email."""
+        username = data.get('username')
+        email = data.get('email')
+
+        # Проверяем, существует ли пользователь с таким username
+        if User.objects.filter(username=username).exclude(email=email).exists():
+            raise serializers.ValidationError(
+                {'username': 'Пользователь с таким username уже существует.'}
+            )
+
+        # Проверяем, существует ли пользователь с таким email
+        if User.objects.filter(email=email).exclude(username=username).exists():
+            raise serializers.ValidationError(
+                {'email': 'Пользователь с таким email уже существует.'}
+            )
+
+        return data
 
     def create(self, validated_data):
         """

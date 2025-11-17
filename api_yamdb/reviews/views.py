@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError
 
 from reviews.models import Comment, Review, Title
 from reviews.serializers import CommentSerializer, ReviewSerializer
@@ -17,8 +18,18 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         title_id = self.kwargs.get('title_id')
+        # Проверяем существование Title *после* валидации данных
+        # Это может вызвать 404, но это корректное поведение
+        # если title_id не существует в URL
         title = get_object_or_404(Title, pk=title_id)
-        serializer.save(author=self.request.user, title=title)
+
+        author = self.request.user
+
+        # Проверяем уникальность перед сохранением
+        if Review.objects.filter(title=title, author=author).exists():
+            raise ValidationError('Вы уже оставляли отзыв на это произведение')
+
+        serializer.save(author=author, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):

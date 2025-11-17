@@ -29,6 +29,7 @@ class User(AbstractUser):
         unique=True,
         blank=False,
         null=False,
+        max_length=254,  # <-- Добавлено
         verbose_name='email адрес',
     )
     bio = models.TextField(

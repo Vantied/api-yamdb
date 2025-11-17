@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from reviews.models import Comment, Review
+from reviews.models import Comment, Review, Title # <-- Добавлен импорт Title
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -85,13 +85,23 @@ class ReviewSerializer(serializers.ModelSerializer):
             ValidationError: Если пользователь уже оставлял отзыв
         """
         if self.context['request'].method == 'POST':
-            title = data.get('title')
+            # title_id из URL, получаем из view
+            try:
+                title_id = self.context['view'].kwargs['title_id']
+                title = Title.objects.get(pk=title_id)
+            except KeyError:
+                # если title_id нет в kwargs, значит, вызов не из ReviewViewSet
+                title = data.get('title')
+            except Title.DoesNotExist:
+                title = None
+
             author = self.context['request'].user
 
-            if Review.objects.filter(title=title, author=author).exists():
-                raise serializers.ValidationError(
-                    'Вы уже оставляли отзыв на это произведение'
-                )
+            if title and author:
+                if Review.objects.filter(title=title, author=author).exists():
+                    raise serializers.ValidationError(
+                        'Вы уже оставляли отзыв на это произведение'
+                    )
 
         return data
 
