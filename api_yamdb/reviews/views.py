@@ -1,47 +1,68 @@
-from rest_framework import viewsets
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import ValidationError
+from rest_framework import status, viewsets
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from reviews.models import Comment, Review, Title
+from api.permissions import IsModeratorOrAdminOrReadOnly
+from reviews.models import Review, Title
 from reviews.serializers import CommentSerializer, ReviewSerializer
-from api.permissions import IsOwnerOrReadOnly
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsOwnerOrReadOnly,)
-    http_method_names = ('get', 'post', 'patch', 'delete')
+    permission_classes = (
+        IsAuthenticatedOrReadOnly, IsModeratorOrAdminOrReadOnly
+    )
+
+    def get_title(self):
+        """Получает title по title_id из URL"""
+        return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
 
     def get_queryset(self):
-        title_id = self.kwargs.get('title_id')
-        return Review.objects.filter(title_id=title_id)
+        """Возвращает отзывы для конкретного title"""
+        title = self.get_title()
+        return Review.objects.filter(title=title)
 
     def perform_create(self, serializer):
-        title_id = self.kwargs.get('title_id')
-        # Проверяем существование Title *после* валидации данных
-        # Это может вызвать 404, но это корректное поведение
-        # если title_id не существует в URL
-        title = get_object_or_404(Title, pk=title_id)
+        """Создает отзыв с автором и title"""
+        title = self.get_title()
+        serializer.save(author=self.request.user, title=title)
 
-        author = self.request.user
-
-        # Проверяем уникальность перед сохранением
-        if Review.objects.filter(title=title, author=author).exists():
-            raise ValidationError('Вы уже оставляли отзыв на это произведение')
-
-        serializer.save(author=author, title=title)
+    def update(self, request, *args, **kwargs):
+        """Запрещаем PUT-запросы"""
+        if request.method == 'PUT':
+            return Response(
+                {'detail': 'Метод PUT не разрешен'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return super().update(request, *args, **kwargs)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsOwnerOrReadOnly,)
-    http_method_names = ('get', 'post', 'patch', 'delete')
+    permission_classes = (
+        IsAuthenticatedOrReadOnly, IsModeratorOrAdminOrReadOnly
+    )
+
+    def get_review(self):
+        """Получает review по review_id из URL"""
+        return get_object_or_404(Review, pk=self.kwargs.get('review_id'))
 
     def get_queryset(self):
-        review_id = self.kwargs.get('review_id')
-        return Comment.objects.filter(review_id=review_id)
+        """Возвращает комментарии для конкретного отзыва"""
+        review = self.get_review()
+        return review.comments.all()
 
     def perform_create(self, serializer):
-        review_id = self.kwargs.get('review_id')
-        review = get_object_or_404(Review, pk=review_id)
+        """Создает комментарий с автором и review"""
+        review = self.get_review()
         serializer.save(author=self.request.user, review=review)
+
+    def update(self, request, *args, **kwargs):
+        """Запрещаем PUT-запросы"""
+        if request.method == 'PUT':
+            return Response(
+                {'detail': 'Метод PUT не разрешен'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return super().update(request, *args, **kwargs)
