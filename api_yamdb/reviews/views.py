@@ -1,49 +1,68 @@
-from rest_framework import viewsets
+from django.shortcuts import get_object_or_404
+from rest_framework import status, viewsets
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from reviews.models import Comment, Review
+from api.permissions import IsModeratorOrAdminOrReadOnly
+from reviews.models import Review, Title
 from reviews.serializers import CommentSerializer, ReviewSerializer
-from api.permissions import IsOwnerOrReadOnly
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    """
-    Вьюсет для работы с отзывами.
-
-    Предоставляет полный CRUD для отзывов:
-    - list: получение списка отзывов (доступно без токена)
-    - retrieve: получение конкретного отзыва (доступно без токена)
-    - create: создание отзыва (только аутентифицированные пользователи)
-    - update/partial_update: изменение отзыва
-    - destroy: удаление отзыва (только автор, модератор или администратор)
-
-    Ограничения:
-    - Один пользователь может оставить только один отзыв на произведение
-    - Оценка должна быть в диапазоне от 1 до 10
-    """
-    queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = (IsOwnerOrReadOnly,)
+    permission_classes = (
+        IsAuthenticatedOrReadOnly, IsModeratorOrAdminOrReadOnly
+    )
+
+    def get_title(self):
+        """Получает title по title_id из URL"""
+        return get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+
+    def get_queryset(self):
+        """Возвращает отзывы для конкретного title"""
+        title = self.get_title()
+        return Review.objects.filter(title=title)
 
     def perform_create(self, serializer):
-        """Автоматически устанавливает автора отзыва при создании."""
-        serializer.save(author=self.request.user)
+        """Создает отзыв с автором и title"""
+        title = self.get_title()
+        serializer.save(author=self.request.user, title=title)
+
+    def update(self, request, *args, **kwargs):
+        """Запрещаем PUT-запросы"""
+        if request.method == 'PUT':
+            return Response(
+                {'detail': 'Метод PUT не разрешен'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return super().update(request, *args, **kwargs)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    """
-    Вьюсет для работы с комментариями.
-
-    Предоставляет полный CRUD для комментариев:
-    - list: получение списка комментариев (доступно без токена)
-    - retrieve: получение конкретного комментария (доступно без токена)
-    - create: создание комментария (только аутентифицированные пользователи)
-    - update/partial_update: изменение комментария
-    - destroy: удаление комментария (только автор, модератор или администратор)
-    """
-    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = (IsOwnerOrReadOnly,)
+    permission_classes = (
+        IsAuthenticatedOrReadOnly, IsModeratorOrAdminOrReadOnly
+    )
+
+    def get_review(self):
+        """Получает review по review_id из URL"""
+        return get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+
+    def get_queryset(self):
+        """Возвращает комментарии для конкретного отзыва"""
+        review = self.get_review()
+        return review.comments.all()
 
     def perform_create(self, serializer):
-        """Автоматически устанавливает автора комментария при создании."""
-        serializer.save(author=self.request.user)
+        """Создает комментарий с автором и review"""
+        review = self.get_review()
+        serializer.save(author=self.request.user, review=review)
+
+    def update(self, request, *args, **kwargs):
+        """Запрещаем PUT-запросы"""
+        if request.method == 'PUT':
+            return Response(
+                {'detail': 'Метод PUT не разрешен'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
+        return super().update(request, *args, **kwargs)
