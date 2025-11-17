@@ -6,11 +6,12 @@ from django_filters import rest_framework as django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.permissions import AllowAny
 
 from api.permissions import IsAdmin, IsAdminOrReadOnly
 from api.serializers import (
@@ -29,52 +30,36 @@ from reviews.models import Category, Genre, Title
 User = get_user_model()
 
 
+
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def signup(request):
-    """
-    Эндпоинт регистрации нового пользователя.
-
-    Принимает email и username, генерирует confirmation_code
-    и отправляет его на email (в продакшене).
-
-    Methods:
-        POST: Создание нового пользователя или обновление кода подтверждения
-    """
     serializer = SignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
-    email = serializer.validated_data['email']
     username = serializer.validated_data['username']
+    email = serializer.validated_data['email']
 
-    # Генерация кода подтверждения
-    confirmation_code = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
+    user, created = User.objects.get_or_create(username=username, email=email)
+    
+    # Обновляем confirmation_code каждый раз
+    user.confirmation_code = secrets.token_urlsafe(16)
+    user.save()
 
-    # Создание или обновление пользователя
-    user, created = User.objects.get_or_create(
-        username=username,
-        email=email,
-        defaults={'confirmation_code': confirmation_code}
-    )
-
-    if not created:
-        user.confirmation_code = confirmation_code
-        user.save()
-
+    # Отправка письма с кодом подтверждения
     send_mail(
-        'Код подтверждения YaMDb',
-        f'Ваш код подтверждения: {confirmation_code}',
-        'yamdb@example.com',
+        'Код подтверждения',
+        f'Ваш код: {user.confirmation_code}',
+        'from@example.com',
         [email],
-        fail_silently=False,
     )
 
-    return Response(
-        {'email': email, 'username': username},
-        status=status.HTTP_200_OK
-    )
+    return Response({'email': email, 'username': username}, status=status.HTTP_200_OK)
+
 
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def get_token(request):
     """
     Эндпоинт получения JWT токена.
@@ -125,6 +110,7 @@ class TitleFilter(django_filters.FilterSet):
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
+    http_method_names = ('get', 'post', 'patch', 'delete')
     serializer_class = UserSerializer
     permission_classes = (IsAdmin,)
     lookup_field = 'username'
@@ -166,6 +152,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     ?year=2020 - по году выпуска
     """
     queryset = Title.objects.all()
+    http_method_names = ('get', 'post', 'patch', 'delete')
     filter_backends = (DjangoFilterBackend,)
     permission_classes = (IsAdminOrReadOnly,)
     filterset_class = TitleFilter

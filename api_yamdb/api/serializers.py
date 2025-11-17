@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from django.core.validators import RegexValidator
+from django.utils.crypto import get_random_string
 
 from api.constants import EMAIL_MAX_LENGTH, USERNAME_MAX_LENGTH
 from reviews.models import Category, Genre, Title
@@ -35,23 +37,49 @@ class UserMeSerializer(serializers.ModelSerializer):
 class SignUpSerializer(serializers.Serializer):
     email = serializers.EmailField(
         required=True,
-        max_length=EMAIL_MAX_LENGTH,
-        validators=(UniqueValidator(queryset=User.objects.all()),)
+        max_length=254,
+        validators=[UniqueValidator(queryset=User.objects.all())]
     )
     username = serializers.CharField(
         required=True,
-        max_length=USERNAME_MAX_LENGTH,
-        validators=(UniqueValidator(queryset=User.objects.all()),)
+        max_length=150,
+        validators=[
+            UniqueValidator(queryset=User.objects.all()),
+            RegexValidator(
+                regex=r'^[\w.@+-]+\Z',
+                message='Недопустимые символы в username'
+            )
+        ]
     )
 
     def validate_username(self, value):
         """Проверяет, что username не является зарезервированным именем."""
-
         if value.lower() == 'me':
             raise serializers.ValidationError(
                 "Использование имени 'me' в качестве username запрещено."
             )
         return value
+
+    def create(self, validated_data):
+        """
+        Создает пользователя или возвращает существующего.
+        Генерирует confirmation_code для проверки email.
+        """
+        user, created = User.objects.get_or_create(
+            username=validated_data['username'],
+            defaults={'email': validated_data['email']}
+        )
+
+        # Если пользователь уже существует, обновляем email (если нужно)
+        if not created and user.email != validated_data['email']:
+            user.email = validated_data['email']
+            user.save(update_fields=['email'])
+
+        # Генерируем confirmation_code
+        user.confirmation_code = get_random_string(length=24)
+        user.save(update_fields=['confirmation_code'])
+
+        return user
 
 
 class TokenSerializer(serializers.Serializer):

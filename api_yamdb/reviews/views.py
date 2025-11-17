@@ -1,49 +1,36 @@
 from rest_framework import viewsets
+from django.shortcuts import get_object_or_404
 
-from reviews.models import Comment, Review
+from reviews.models import Comment, Review, Title
 from reviews.serializers import CommentSerializer, ReviewSerializer
 from api.permissions import IsOwnerOrReadOnly
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    """
-    Вьюсет для работы с отзывами.
-
-    Предоставляет полный CRUD для отзывов:
-    - list: получение списка отзывов (доступно без токена)
-    - retrieve: получение конкретного отзыва (доступно без токена)
-    - create: создание отзыва (только аутентифицированные пользователи)
-    - update/partial_update: изменение отзыва
-    - destroy: удаление отзыва (только автор, модератор или администратор)
-
-    Ограничения:
-    - Один пользователь может оставить только один отзыв на произведение
-    - Оценка должна быть в диапазоне от 1 до 10
-    """
-    queryset = Review.objects.all()
     serializer_class = ReviewSerializer
     permission_classes = (IsOwnerOrReadOnly,)
+    http_method_names = ('get', 'post', 'patch', 'delete')
+
+    def get_queryset(self):
+        title_id = self.kwargs.get('title_id')
+        return Review.objects.filter(title_id=title_id)
 
     def perform_create(self, serializer):
-        """Автоматически устанавливает автора отзыва при создании."""
-        serializer.save(author=self.request.user)
+        title_id = self.kwargs.get('title_id')
+        title = get_object_or_404(Title, pk=title_id)
+        serializer.save(author=self.request.user, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    """
-    Вьюсет для работы с комментариями.
-
-    Предоставляет полный CRUD для комментариев:
-    - list: получение списка комментариев (доступно без токена)
-    - retrieve: получение конкретного комментария (доступно без токена)
-    - create: создание комментария (только аутентифицированные пользователи)
-    - update/partial_update: изменение комментария
-    - destroy: удаление комментария (только автор, модератор или администратор)
-    """
-    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = (IsOwnerOrReadOnly,)
+    http_method_names = ('get', 'post', 'patch', 'delete')
+
+    def get_queryset(self):
+        review_id = self.kwargs.get('review_id')
+        return Comment.objects.filter(review_id=review_id)
 
     def perform_create(self, serializer):
-        """Автоматически устанавливает автора комментария при создании."""
-        serializer.save(author=self.request.user)
+        review_id = self.kwargs.get('review_id')
+        review = get_object_or_404(Review, pk=review_id)
+        serializer.save(author=self.request.user, review=review)
