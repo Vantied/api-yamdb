@@ -15,6 +15,7 @@ class RatingService:
         """
         Рассчитывает рейтинг произведения на основе отзывов.
         """
+
         avg_rating = Review.objects.filter(
             title=title
         ).aggregate(average_rating=Avg('score'))['average_rating']
@@ -26,6 +27,7 @@ class RatingService:
         """
         Обновляет рейтинг произведения в базе данных.
         """
+
         new_rating = RatingService.calculate_title_rating(title)
         title.rating = new_rating
         title.save(update_fields=['rating'])
@@ -38,4 +40,5 @@ def update_title_rating_on_review_change(sender, instance, **kwargs):
     Обработчик сигналов для автоматического обновления рейтинга
     при создании, изменении или удалении отзывов.
     """
+
     RatingService.update_title_rating(instance.title)
