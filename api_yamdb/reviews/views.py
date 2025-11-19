@@ -4,8 +4,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from api.permissions import IsModeratorOrAdminOrReadOnly
+from api.serializers import CommentSerializer, ReviewSerializer
 from reviews.models import Review, Title, Comment
-from reviews.serializers import CommentSerializer, ReviewSerializer
+
 
 
 # ---------------------------------------------------------
