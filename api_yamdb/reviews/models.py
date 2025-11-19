@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -105,8 +107,15 @@ class Title(models.Model):
         Category, on_delete=models.CASCADE, related_name='titles')
     genre = models.ManyToManyField(Genre, related_name='titles')
     name = models.CharField(max_length=NAME_MAX_LENGTH)
-    year = models.IntegerField()
-    rating = models.IntegerField(null=True, blank=True)
+    year = models.PositiveSmallIntegerField(
+        validators=[
+            MinValueValidator(0, 'Год не может быть меньше 0'),
+            MaxValueValidator(
+                date.today().year,
+                'Нельзя указывать год из будущего'
+            )
+        ]
+    )
     description = models.TextField()
 
     class Meta:
