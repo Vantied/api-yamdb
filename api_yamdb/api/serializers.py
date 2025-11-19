@@ -195,7 +195,7 @@ class TitleCreateSerializer(BaseTitleSerializer):
 
 
 # ============================================================
-#                      REVIEW / COMMENTS
+#                      REVIEW / COMMENT
 # ============================================================
 
 class CommentSerializer(serializers.ModelSerializer):

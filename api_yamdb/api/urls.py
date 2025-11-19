@@ -3,9 +3,15 @@ from rest_framework import routers
 
 from api.constants import VERSION
 from api.views import (
-    CategoryViewSet, GenreViewSet, get_token, signup, TitleViewSet, UserViewSet
+    CategoryViewSet,
+    CommentViewSet,
+    GenreViewSet,
+    get_token,
+    ReviewViewSet,
+    signup,
+    TitleViewSet,
+    UserViewSet,
 )
-from reviews.views import CommentViewSet, ReviewViewSet
 
 app_name = 'api'
 
