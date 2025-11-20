@@ -11,6 +11,7 @@ from reviews.constants import (
     ROLE_MAX_LENGTH,
     SLUG_MAX_LENGTH
 )
+from reviews.validators import get_score_validators
 
 
 # --------------------------------------
@@ -133,12 +134,7 @@ class Title(models.Model):
 class Review(BaseTextAuthorDateModel):
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, related_name='reviews')
-    score = models.IntegerField(
-        validators=[
-            MinValueValidator(1, 'Оценка не может быть меньше 1'),
-            MaxValueValidator(10, 'Оценка не может быть больше 10')
-        ]
-    )
+    score = models.IntegerField(validators=get_score_validators())
 
     class Meta:
         verbose_name = 'Отзыв'

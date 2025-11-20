@@ -2,11 +2,13 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.core.validators import RegexValidator
 from django.utils.crypto import get_random_string
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from api.constants import EMAIL_MAX_LENGTH, USERNAME_MAX_LENGTH
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Comment, Genre, Review, Title
+from reviews.validators import get_score_validators
 
 User = get_user_model()
 
@@ -183,3 +185,63 @@ class TitleCreateSerializer(BaseTitleSerializer):
 
     class Meta(BaseTitleSerializer.Meta):
         read_only_fields = ('id', 'rating')
+
+    def validate_year(self, value):
+        if value > timezone.now().year:
+            raise serializers.ValidationError(
+                'Год не может быть больше текущего.'
+            )
+        return value
+
+
+# ============================================================
+#                      REVIEW / COMMENT
+# ============================================================
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True
+    )
+
+    class Meta:
+        model = Comment
+        fields = ('id', 'text', 'author', 'pub_date')
+        read_only_fields = ('id', 'author', 'pub_date')
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True
+    )
+
+    class Meta:
+        model = Review
+        fields = ('id', 'title', 'text', 'author', 'score', 'pub_date')
+        read_only_fields = ('id', 'author', 'pub_date', 'title')
+
+    def validate(self, data):
+        """
+        Проверяет что пользователь не оставлял отзыв на это произведение.
+        """
+        if self.context['request'].method == 'POST':
+            title_id = self.context['view'].kwargs.get('title_id')
+            if title_id:
+                title = get_object_or_404(Title, pk=title_id)
+                author = self.context['request'].user
+
+                if Review.objects.filter(title=title, author=author).exists():
+                    raise serializers.ValidationError(
+                        'Вы уже оставляли отзыв на это произведение'
+                    )
+
+        return data
+
+    def validate_score(self, value):
+        """Валидация оценки от 1 до 10 с использованием общих правил"""
+
+        validators = get_score_validators()
+        for validator in validators:
+            validator(value)
+        return value
