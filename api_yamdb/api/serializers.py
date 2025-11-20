@@ -183,10 +183,3 @@ class TitleCreateSerializer(BaseTitleSerializer):
 
     class Meta(BaseTitleSerializer.Meta):
         read_only_fields = ('id', 'rating')
-
-    def validate_year(self, value):
-        if value > timezone.now().year:
-            raise serializers.ValidationError(
-                'Год не может быть больше текущего.'
-            )
-        return value

@@ -3,7 +3,6 @@ import secrets
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from django_filters import rest_framework as filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
@@ -23,6 +22,7 @@ from api.serializers import (
     TitleSerializer,
     TokenSerializer,
 )
+from api.filters import TitleFilter
 from reviews.models import Category, Genre, Title
 
 
@@ -104,21 +104,6 @@ class BaseFilteredModelViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     permission_classes = (IsAdminOrReadOnly,)
     http_method_names = ('get', 'post', 'patch', 'delete')
-
-
-# ============================================================
-#                    FILTERS
-# ============================================================
-
-class TitleFilter(filters.FilterSet):
-    category = filters.CharFilter(field_name='category__slug')
-    genre = filters.CharFilter(field_name='genre__slug')
-    name = filters.CharFilter(field_name='name', lookup_expr='icontains')
-    year = filters.NumberFilter()
-
-    class Meta:
-        model = Title
-        fields = ('category', 'genre', 'name', 'year')
 
 
 # ============================================================
