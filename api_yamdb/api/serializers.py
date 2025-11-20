@@ -1,14 +1,17 @@
 from django.contrib.auth import get_user_model
-from django.utils import timezone
-from django.core.validators import RegexValidator
-from django.utils.crypto import get_random_string
+from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound
 from rest_framework.validators import UniqueValidator
 
 from api.constants import EMAIL_MAX_LENGTH, USERNAME_MAX_LENGTH
 from reviews.models import Category, Comment, Genre, Review, Title
-from reviews.validators import get_score_validators
+from reviews.validators import (
+    get_score_validators,
+    username_validator,
+    validate_username_not_me,
+)
 
 User = get_user_model()
 
@@ -19,6 +22,8 @@ User = get_user_model()
 
 class BaseNameSlugSerializer(serializers.ModelSerializer):
     """Базовый сериализатор для моделей с полями name/slug."""
+
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         fields = ('name', 'slug')
@@ -40,6 +45,8 @@ class BaseUserSerializer(serializers.ModelSerializer):
 
 class BaseTitleSerializer(serializers.ModelSerializer):
     """Базовый сериализатор для Title — общие поля."""
+
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Title
@@ -64,13 +71,6 @@ class UserSerializer(BaseUserSerializer):
     )
 
 
-class UserMeSerializer(BaseUserSerializer):
-    """Профиль текущего пользователя. Роль менять нельзя."""
-
-    class Meta(BaseUserSerializer.Meta):
-        read_only_fields = ('role',)
-
-
 # ============================================================
 #                    SIGNUP & TOKEN
 # ============================================================
@@ -81,28 +81,15 @@ class SignUpSerializer(serializers.Serializer):
         required=True
     )
     username = serializers.CharField(
-        max_length=150,
+        max_length=USERNAME_MAX_LENGTH,
         required=True,
-        validators=[
-            RegexValidator(
-                regex=r'^[\w.@+-]+\Z',
-                message="Недопустимые символы в username"
-            )
-        ]
+        validators=[username_validator, validate_username_not_me]
     )
-
-    def validate_username(self, value):
-        if value.lower() == 'me':
-            raise serializers.ValidationError(
-                "Использование имени 'me' запрещено."
-            )
-        return value
 
     def validate(self, data):
         username = data['username']
         email = data['email']
 
-        # username занят другим email
         if User.objects.filter(username=username).exclude(
             email=email
         ).exists():
@@ -110,7 +97,6 @@ class SignUpSerializer(serializers.Serializer):
                 {'username': 'Пользователь с таким username уже существует.'}
             )
 
-        # email занят другим username
         if User.objects.filter(email=email).exclude(
             username=username
         ).exists():
@@ -121,7 +107,7 @@ class SignUpSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
-        """Создаёт пользователя и обновляет email при несовпадении."""
+        """Создаёт или обновляет пользователя."""
         username = validated_data['username']
         email = validated_data['email']
 
@@ -132,17 +118,36 @@ class SignUpSerializer(serializers.Serializer):
 
         if not created and user.email != email:
             user.email = email
-
-        # Генерация нового confirmation_code
-        user.confirmation_code = get_random_string(length=24)
-        user.save(update_fields=['email', 'confirmation_code'])
+            user.save(update_fields=['email'])
 
         return user
 
 
 class TokenSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=USERNAME_MAX_LENGTH)
+    username = serializers.CharField(
+        max_length=USERNAME_MAX_LENGTH,
+        validators=[username_validator, validate_username_not_me]
+    )
     confirmation_code = serializers.CharField()
+
+    def validate_username(self, value):
+        """Проверяем существование пользователя."""
+        if not User.objects.filter(username=value).exists():
+            raise NotFound('Пользователь не найден')
+        return value
+
+    def validate(self, data):
+        username = data['username']
+        confirmation_code = data['confirmation_code']
+        user = User.objects.get(username=username)
+
+        if not default_token_generator.check_token(user, confirmation_code):
+            raise serializers.ValidationError(
+                {'confirmation_code': 'Неверный код подтверждения'}
+            )
+
+        data['user'] = user
+        return data
 
 
 # ============================================================
@@ -185,13 +190,6 @@ class TitleCreateSerializer(BaseTitleSerializer):
 
     class Meta(BaseTitleSerializer.Meta):
         read_only_fields = ('id', 'rating')
-
-    def validate_year(self, value):
-        if value > timezone.now().year:
-            raise serializers.ValidationError(
-                'Год не может быть больше текущего.'
-            )
-        return value
 
 
 # ============================================================
