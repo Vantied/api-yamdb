@@ -26,6 +26,8 @@ username_validator = RegexValidator(
     regex=r'^[\w.@+-]+\Z',
     message="Недопустимые символы в username"
 )
+
+
 def get_year_validators():
     """Возвращает валидаторы для года."""
     current_year = timezone.now().year
