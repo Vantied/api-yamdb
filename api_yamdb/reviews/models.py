@@ -1,14 +1,20 @@
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import Avg
 
+from api.constants import EMAIL_MAX_LENGTH, USERNAME_MAX_LENGTH
 from reviews.constants import (
-    CONFIRMATION_CODE_MAX_LENGTH,
     LAST_TWENTY_CHARS,
     NAME_MAX_LENGTH,
     ROLE_MAX_LENGTH,
-    SLUG_MAX_LENGTH
+    SLUG_MAX_LENGTH,
 )
+from reviews.validators import (
+    get_score_validators,
+    username_validator,
+    validate_username_not_me,
+)
+from reviews.validators import get_score_validators, get_year_validators
 
 
 # --------------------------------------
@@ -48,22 +54,23 @@ class BaseTextAuthorDateModel(models.Model):
 # --------------------------------------
 
 class User(AbstractUser):
-    USER = 'user'
-    MODERATOR = 'moderator'
-    ADMIN = 'admin'
+    class Role(models.TextChoices):
+        USER = 'user', 'Пользователь'
+        MODERATOR = 'moderator', 'Модератор'
+        ADMIN = 'admin', 'Администратор'
 
-    ROLE_CHOICES = (
-        (USER, 'Пользователь'),
-        (MODERATOR, 'Модератор'),
-        (ADMIN, 'Администратор'),
+    username = models.CharField(
+        max_length=USERNAME_MAX_LENGTH,
+        unique=True,
+        validators=[username_validator, validate_username_not_me]
     )
-
-    email = models.EmailField(unique=True, max_length=254)
+    email = models.EmailField(unique=True, max_length=EMAIL_MAX_LENGTH)
     bio = models.TextField(blank=True)
-    role = models.CharField(max_length=ROLE_MAX_LENGTH,
-                            choices=ROLE_CHOICES, default=USER)
-    confirmation_code = models.CharField(
-        max_length=CONFIRMATION_CODE_MAX_LENGTH, blank=True)
+    role = models.CharField(
+        max_length=ROLE_MAX_LENGTH,
+        choices=Role.choices,
+        default=Role.USER
+    )
 
     class Meta:
         ordering = ("id",)
@@ -73,11 +80,14 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == self.ADMIN or self.is_superuser
+        return (self.role == self.Role.ADMIN
+                or self.is_superuser
+                or self.is_staff)
 
     @property
     def is_moderator(self):
-        return self.role == self.MODERATOR or self.is_admin
+        return (self.role == self.Role.MODERATOR
+                or self.is_admin)
 
 
 # --------------------------------------
@@ -105,8 +115,9 @@ class Title(models.Model):
         Category, on_delete=models.CASCADE, related_name='titles')
     genre = models.ManyToManyField(Genre, related_name='titles')
     name = models.CharField(max_length=NAME_MAX_LENGTH)
-    year = models.IntegerField()
-    rating = models.IntegerField(null=True, blank=True)
+    year = models.PositiveSmallIntegerField(
+        validators=get_year_validators()
+    )
     description = models.TextField()
 
     class Meta:
@@ -116,6 +127,13 @@ class Title(models.Model):
     def __str__(self):
         return self.name[:LAST_TWENTY_CHARS]
 
+    @property
+    def rating(self):
+        """Вычисляет средний рейтинг на основе отзывов."""
+
+        avg_rating = self.reviews.aggregate(Avg('score'))['score__avg']
+        return round(avg_rating) if avg_rating is not None else None
+
 
 # --------------------------------------
 # Review
@@ -124,12 +142,7 @@ class Title(models.Model):
 class Review(BaseTextAuthorDateModel):
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, related_name='reviews')
-    score = models.IntegerField(
-        validators=[
-            MinValueValidator(1, 'Оценка не может быть меньше 1'),
-            MaxValueValidator(10, 'Оценка не может быть больше 10')
-        ]
-    )
+    score = models.IntegerField(validators=get_score_validators())
 
     class Meta:
         verbose_name = 'Отзыв'
