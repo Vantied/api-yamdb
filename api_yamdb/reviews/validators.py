@@ -4,6 +4,7 @@ from django.core.validators import (
     MaxValueValidator,
     RegexValidator
 )
+from django.utils import timezone
 
 
 def get_score_validators():
@@ -25,3 +26,10 @@ username_validator = RegexValidator(
     regex=r'^[\w.@+-]+\Z',
     message="Недопустимые символы в username"
 )
+def get_year_validators():
+    """Возвращает валидаторы для года."""
+    current_year = timezone.now().year
+    return [
+        MinValueValidator(0, 'Год не может быть меньше 0'),
+        MaxValueValidator(current_year, 'Нельзя указывать год из будущего')
+    ]

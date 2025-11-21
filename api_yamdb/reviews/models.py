@@ -17,6 +17,7 @@ from reviews.validators import (
     username_validator,
     validate_username_not_me,
 )
+from reviews.validators import get_score_validators, get_year_validators
 
 
 # --------------------------------------
@@ -118,13 +119,7 @@ class Title(models.Model):
     genre = models.ManyToManyField(Genre, related_name='titles')
     name = models.CharField(max_length=NAME_MAX_LENGTH)
     year = models.PositiveSmallIntegerField(
-        validators=[
-            MinValueValidator(0, 'Год не может быть меньше 0'),
-            MaxValueValidator(
-                date.today().year,
-                'Нельзя указывать год из будущего'
-            )
-        ]
+        validators=get_year_validators()
     )
     description = models.TextField()
 
