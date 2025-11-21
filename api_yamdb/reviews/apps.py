@@ -6,9 +6,5 @@ class ReviewsConfig(AppConfig):
     name = 'reviews'
 
     def ready(self):
-        """
-        Запускается при готовности приложения.
-        Подключает обработчики для автоматического обновления рейтингов.
-        """
-        from reviews import rating_service
-        _ = rating_service
+
+        pass

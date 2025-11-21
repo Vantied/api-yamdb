@@ -1,28 +1,21 @@
-import secrets
-
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import (
-    mixins,
-    status,
-    viewsets,
-)
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import NotFound
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import (
-    AllowAny,
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
+    AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 )
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
+from api.filters import TitleFilter
 from api.permissions import (
-    IsAdmin,
-    IsAdminOrReadOnly,
-    IsModeratorOrAdminOrReadOnly,
+    IsAdmin, IsAdminOrReadOnly, IsModeratorOrAdminOrReadOnly
 )
 from api.serializers import (
     CategorySerializer,
@@ -33,19 +26,9 @@ from api.serializers import (
     TitleCreateSerializer,
     TitleSerializer,
     TokenSerializer,
-    UserMeSerializer,
     UserSerializer,
 )
-from reviews.models import (
-    Category,
-    Comment,
-    Genre,
-    Review,
-    Title,
-)
-from api.filters import TitleFilter
-from reviews.models import Category, Genre, Title
-
+from reviews.models import Category, Comment, Genre, Review, Title
 
 User = get_user_model()
 
@@ -105,44 +88,33 @@ def signup(request):
     serializer = SignUpSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
-    username = serializer.validated_data['username']
-    email = serializer.validated_data['email']
+    user = serializer.save()
 
-    user, _ = User.objects.get_or_create(username=username)
-
-    if user.email != email:
-        user.email = email
-
-    user.confirmation_code = secrets.token_urlsafe(16)
-    user.save(update_fields=['email', 'confirmation_code'])
+    token = default_token_generator.make_token(user)
 
     send_mail(
         'Код подтверждения',
-        f'Ваш код подтверждения: {user.confirmation_code}',
+        f'Ваш код подтверждения: {token}',
         'noreply@example.com',
-        [email],
+        [user.email],
     )
 
-    return Response({'username': username, 'email': email})
+    return Response({'username': user.username, 'email': user.email})
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_token(request):
-    serializer = TokenSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-
-    username = serializer.validated_data['username']
-    confirmation_code = serializer.validated_data['confirmation_code']
-
-    user = get_object_or_404(User, username=username)
-
-    if user.confirmation_code != confirmation_code:
+    try:
+        serializer = TokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+    except NotFound:
         return Response(
-            {'confirmation_code': 'Неверный код подтверждения'},
-            status=status.HTTP_400_BAD_REQUEST
+            {'detail': 'Пользователь не найден'},
+            status=status.HTTP_404_NOT_FOUND
         )
 
+    user = serializer.validated_data['user']
     return Response({'token': str(AccessToken.for_user(user))})
 
 
@@ -194,14 +166,18 @@ class UserViewSet(viewsets.ModelViewSet):
         user = request.user
 
         if request.method == 'GET':
-            return Response(UserMeSerializer(user).data)
+            return Response(UserSerializer(user).data)
 
-        serializer = UserMeSerializer(
+        serializer = UserSerializer(
             user,
             data=request.data,
             partial=True
         )
         serializer.is_valid(raise_exception=True)
+
+        if 'role' in serializer.validated_data:
+            del serializer.validated_data['role']
+
         serializer.save()
         return Response(serializer.data)
 

@@ -1,4 +1,9 @@
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
+from django.core.validators import (
+    MinValueValidator,
+    MaxValueValidator,
+    RegexValidator
+)
 from django.utils import timezone
 
 
@@ -10,6 +15,17 @@ def get_score_validators():
     ]
 
 
+def validate_username_not_me(value):
+    """Валидация: имя пользователя не может быть 'me'."""
+    if value.lower() == 'me':
+        raise ValidationError("Использование имени 'me' запрещено.")
+    return value
+
+
+username_validator = RegexValidator(
+    regex=r'^[\w.@+-]+\Z',
+    message="Недопустимые символы в username"
+)
 def get_year_validators():
     """Возвращает валидаторы для года."""
     current_year = timezone.now().year
