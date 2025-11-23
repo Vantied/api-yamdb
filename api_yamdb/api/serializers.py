@@ -220,20 +220,16 @@ class ReviewSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'author', 'pub_date', 'title')
 
     def validate(self, data):
-        """
-        Проверяет что пользователь не оставлял отзыв на это произведение.
-        """
+        """Проверяет что пользователь не оставлял отзыв на это произведение."""
         if self.context['request'].method == 'POST':
             title_id = self.context['view'].kwargs.get('title_id')
-            if title_id:
-                title = get_object_or_404(Title, pk=title_id)
-                author = self.context['request'].user
+            title = get_object_or_404(Title, pk=title_id)
+            author = self.context['request'].user
 
-                if Review.objects.filter(title=title, author=author).exists():
-                    raise serializers.ValidationError(
-                        'Вы уже оставляли отзыв на это произведение'
-                    )
-
+            if Review.objects.filter(title=title, author=author).exists():
+                raise serializers.ValidationError(
+                    'Вы уже оставляли отзыв на это произведение'
+                )
         return data
 
     def validate_score(self, value):

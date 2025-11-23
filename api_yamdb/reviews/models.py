@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import Avg
 
 from api.constants import EMAIL_MAX_LENGTH, USERNAME_MAX_LENGTH
 from reviews.constants import (
@@ -10,11 +9,11 @@ from reviews.constants import (
     SLUG_MAX_LENGTH,
 )
 from reviews.validators import (
+    get_year_validators,
     get_score_validators,
     username_validator,
-    validate_username_not_me,
+    validate_username_not_me
 )
-from reviews.validators import get_score_validators, get_year_validators
 
 
 # --------------------------------------
@@ -127,13 +126,6 @@ class Title(models.Model):
     def __str__(self):
         return self.name[:LAST_TWENTY_CHARS]
 
-    @property
-    def rating(self):
-        """Вычисляет средний рейтинг на основе отзывов."""
-
-        avg_rating = self.reviews.aggregate(Avg('score'))['score__avg']
-        return round(avg_rating) if avg_rating is not None else None
-
 
 # --------------------------------------
 # Review
@@ -142,7 +134,7 @@ class Title(models.Model):
 class Review(BaseTextAuthorDateModel):
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, related_name='reviews')
-    score = models.IntegerField(validators=get_score_validators())
+    score = models.PositiveSmallIntegerField(validators=get_score_validators())
 
     class Meta:
         verbose_name = 'Отзыв'
