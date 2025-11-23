@@ -11,8 +11,10 @@ from reviews.constants import (
 def get_score_validators():
     """Возвращает общие валидаторы для оценки"""
     return [
-        MinValueValidator(MIN_SCORE, "Оценка не может быть меньше 1"),
-        MaxValueValidator(MAX_SCORE, "Оценка не может быть больше 10")
+        MinValueValidator(
+            MIN_SCORE, f'Оценка не может быть меньше {MIN_SCORE}'),
+        MaxValueValidator(
+            MAX_SCORE, f'Оценка не может быть больше {MAX_SCORE}')
     ]
 
 
