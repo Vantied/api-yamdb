@@ -18,7 +18,7 @@ def get_score_validators():
     ]
 
 
-def validate_username_not_me(value):
+def validate_username(value):
     """Валидация имени пользователя."""
     if value.lower() in FORBIDDEN_USERNAMES:
         raise ValidationError(f'Использование имени "{value}" запрещено.')

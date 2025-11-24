@@ -12,7 +12,7 @@ from reviews.validators import (
     get_year_validators,
     get_score_validators,
     username_validator,
-    validate_username_not_me
+    validate_username
 )
 
 
@@ -61,7 +61,7 @@ class User(AbstractUser):
     username = models.CharField(
         max_length=USERNAME_MAX_LENGTH,
         unique=True,
-        validators=[username_validator, validate_username_not_me]
+        validators=[username_validator, validate_username]
     )
     email = models.EmailField(unique=True, max_length=EMAIL_MAX_LENGTH)
     bio = models.TextField(blank=True)
