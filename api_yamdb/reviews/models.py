@@ -114,7 +114,7 @@ class Title(models.Model):
         Category, on_delete=models.CASCADE, related_name='titles')
     genre = models.ManyToManyField(Genre, related_name='titles')
     name = models.CharField(max_length=NAME_MAX_LENGTH)
-    year = models.PositiveSmallIntegerField(
+    year = models.SmallIntegerField(
         validators=get_year_validators()
     )
     description = models.TextField()
