@@ -10,7 +10,7 @@ from reviews.models import Category, Comment, Genre, Review, Title
 from reviews.validators import (
     get_score_validators,
     username_validator,
-    validate_username_not_me,
+    validate_username,
 )
 
 User = get_user_model()
@@ -83,7 +83,7 @@ class SignUpSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=USERNAME_MAX_LENGTH,
         required=True,
-        validators=[username_validator, validate_username_not_me]
+        validators=[username_validator, validate_username]
     )
 
     def validate(self, data):
@@ -126,7 +126,7 @@ class SignUpSerializer(serializers.Serializer):
 class TokenSerializer(serializers.Serializer):
     username = serializers.CharField(
         max_length=USERNAME_MAX_LENGTH,
-        validators=[username_validator, validate_username_not_me]
+        validators=[username_validator, validate_username]
     )
     confirmation_code = serializers.CharField()
 

@@ -12,7 +12,7 @@ from reviews.validators import (
     get_year_validators,
     get_score_validators,
     username_validator,
-    validate_username_not_me
+    validate_username
 )
 
 
@@ -61,7 +61,7 @@ class User(AbstractUser):
     username = models.CharField(
         max_length=USERNAME_MAX_LENGTH,
         unique=True,
-        validators=[username_validator, validate_username_not_me]
+        validators=[username_validator, validate_username]
     )
     email = models.EmailField(unique=True, max_length=EMAIL_MAX_LENGTH)
     bio = models.TextField(blank=True)
@@ -114,7 +114,7 @@ class Title(models.Model):
         Category, on_delete=models.CASCADE, related_name='titles')
     genre = models.ManyToManyField(Genre, related_name='titles')
     name = models.CharField(max_length=NAME_MAX_LENGTH)
-    year = models.PositiveSmallIntegerField(
+    year = models.SmallIntegerField(
         validators=get_year_validators()
     )
     description = models.TextField()

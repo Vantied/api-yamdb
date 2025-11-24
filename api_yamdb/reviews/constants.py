@@ -5,4 +5,4 @@ SLUG_MAX_LENGTH = 50
 MIN_SCORE = 1
 MAX_SCORE = 10
 MIN_YEAR = -3000  # Для древних произведений
-FORBIDDEN_USERNAMES = 'me'
+FORBIDDEN_USERNAMES = ['me']
